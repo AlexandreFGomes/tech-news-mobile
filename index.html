@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="EU Tech News">
+    <meta name="apple-mobile-web-app-title" content="GTD Press">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#1e3a5f">
 
     <!-- PWA Manifest inline via JS -->
-    <title>EU Tech Geopolitics</title>
+    <title>GTD Press</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -128,7 +128,7 @@
     <header id="appHeader" class="bg-blue-900 text-white shadow-lg sticky top-0 z-50 pb-3 px-4">
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-lg font-bold leading-tight">EU Tech Geopolitics</h1>
+                <h1 class="text-lg font-bold leading-tight">Geopolitics of Tech and Digital | Press Kiosk</h1>
                 <p class="text-blue-200 text-xs">Real-time news dashboard</p>
             </div>
             <div class="flex items-center gap-2">
@@ -148,7 +148,7 @@
     ══════════════════════════════════════════════════════════ -->
     <div id="newsPanel" class="tab-panel active px-3 pt-3">
         <!-- Fetch bar -->
-        <div class="flex gap-2 items-center mb-3">
+        <div class="flex gap-2 items-center mb-3 min-w-0">
             <button onclick="updateNews()" id="updateBtn"
                 class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 text-white text-sm font-semibold shadow active:scale-95 transition-transform flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@
                 <option value="relevance">Relevance</option>
             </select>
             <input type="text" id="searchInput" placeholder="Search…"
-                class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700"
+                class="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-700"
                 oninput="filterArticlesBySearch()" />
         </div>
 
@@ -326,6 +326,28 @@
                 Import Sources
             </button>
             <div id="bulkImportStatus" class="mt-2 text-xs space-y-1"></div>
+        </div>
+
+        <!-- Export / Import full sources JSON -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 mb-4">
+            <h3 class="font-semibold text-sm mb-1">Transfer Sources from Another Device</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">On your laptop, open the dashboard in the browser, open DevTools Console (F12), and run:<br>
+                <code class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-xs font-mono select-all">copy(localStorage.getItem('newsSources'))</code><br>
+                Then paste the result below and tap Import.
+            </p>
+            <textarea id="sourcesJsonImport" rows="4" placeholder='{"netherlands":[{"name":"NU.nl","url":"https://...","enabled":true}],...}'
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-xs font-mono bg-white dark:bg-gray-700 mb-2"></textarea>
+            <div class="flex gap-2">
+                <button onclick="importSourcesJson()"
+                    class="flex-1 py-2 bg-green-600 text-white rounded-xl text-sm font-medium active:scale-95 transition-transform">
+                    ⬇ Import
+                </button>
+                <button onclick="exportSourcesJson()"
+                    class="flex-1 py-2 bg-gray-600 text-white rounded-xl text-sm font-medium active:scale-95 transition-transform">
+                    ⬆ Export / Copy
+                </button>
+            </div>
+            <div id="sourcesJsonStatus" class="mt-2 text-xs"></div>
         </div>
     </div>
 
@@ -1130,7 +1152,48 @@
         } catch(e) { console.error('Load settings error:', e); }
     }
 
-    // ── Boot ───────────────────────────────────────────────────
+    // ── Sources JSON import/export ─────────────────────────────
+    function importSourcesJson() {
+        const raw = document.getElementById('sourcesJsonImport').value.trim();
+        const statusDiv = document.getElementById('sourcesJsonStatus');
+        if (!raw) { statusDiv.innerHTML = '<span class="text-red-500">Paste JSON first</span>'; return; }
+        try {
+            const parsed = JSON.parse(raw);
+            let totalAdded = 0;
+            Object.keys(parsed).forEach(region => {
+                if (!NEWS_SOURCES[region]) NEWS_SOURCES[region] = [];
+                parsed[region].forEach(source => {
+                    if (source.name && source.url && !NEWS_SOURCES[region].some(s => s.url === source.url)) {
+                        NEWS_SOURCES[region].push({ name: source.name, url: source.url, enabled: source.enabled !== false, custom: true });
+                        totalAdded++;
+                    }
+                });
+            });
+            saveSettings();
+            renderSettingsSourcesList();
+            updateSourcesList();
+            document.getElementById('sourcesJsonImport').value = '';
+            statusDiv.innerHTML = `<span class="text-green-500">✓ Imported ${totalAdded} new sources</span>`;
+            setTimeout(() => statusDiv.innerHTML = '', 4000);
+        } catch(e) {
+            statusDiv.innerHTML = `<span class="text-red-500">✗ Invalid JSON: ${e.message}</span>`;
+        }
+    }
+
+    function exportSourcesJson() {
+        const json = JSON.stringify(NEWS_SOURCES, null, 2);
+        const statusDiv = document.getElementById('sourcesJsonStatus');
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(json)
+                .then(() => { statusDiv.innerHTML = '<span class="text-green-500">✓ Copied to clipboard</span>'; setTimeout(() => statusDiv.innerHTML = '', 3000); })
+                .catch(() => { document.getElementById('sourcesJsonImport').value = json; statusDiv.innerHTML = '<span class="text-blue-500">Clipboard unavailable — JSON shown in box above</span>'; });
+        } else {
+            document.getElementById('sourcesJsonImport').value = json;
+            statusDiv.innerHTML = '<span class="text-blue-500">JSON shown in box above — copy it manually</span>';
+        }
+    }
+
+
     window.addEventListener('load', () => {
         loadSettings();
         renderTopics();
@@ -1138,8 +1201,8 @@
 
         // Inject PWA manifest
         const manifest = {
-            name: "EU Tech Geopolitics",
-            short_name: "EU Tech News",
+            name: "GTD Press",
+            short_name: "GTD Press",
             start_url: ".",
             display: "standalone",
             background_color: "#1e3a5f",
