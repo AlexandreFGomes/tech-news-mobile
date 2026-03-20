@@ -245,7 +245,8 @@
                     <option value="portugal">Portugal</option>
                     <option value="europe">Europe</option>
                     <option value="us">United States</option>
-                    <option value="global">Global</option>
+                    <option value="uk">United Kingdom</option>
+                    <option value="asia">Asia</option>
                 </select>
             </div>
 
@@ -419,6 +420,26 @@
             { name: 'Euronews Tech', url: 'https://www.euronews.com/rss?level=theme&name=tech-news', enabled: true },
             { name: 'Follow the Money', url: 'https://www.ftm.nl/feed', enabled: true }
         ],
+        uk: [
+        { name: 'BBC Technology', url: 'http://feeds.bbci.co.uk/news/technology/rss.xml', enabled: true },
+        { name: 'The Guardian Tech', url: 'https://www.theguardian.com/technology/rss', enabled: true }
+        { name: 'Financial Times (UK)', url: 'https://www.ft.com/rss/home/uk', enabled: true },
+        { name: 'Sky News', url: 'https://feeds.skynews.com/feeds/rss/uk.xml', enabled: true },
+        { name: 'The Independent', url: 'https://www.independent.co.uk/news/rss', enabled: true },
+        { name: 'Reuters UK', url: 'https://feeds.reuters.com/reuters/UKdomesticNews', enabled: true },
+        { name: 'TechCrunch UK', url: 'https://techcrunch.com/category/europe/uk/feed/', enabled: true },
+        { name: 'The Telegraph', url: 'https://www.telegraph.co.uk/rss', enabled: true }
+    ],
+    asia: [
+        { name: 'Nikkei Asia', url: 'https://asia.nikkei.com/rss', enabled: true },
+        { name: 'South China Morning Post', url: 'https://www.scmp.com/rss/feed', enabled: true },
+        { name: 'The Straits Times', url: 'https://www.straitstimes.com/news/rss.xml', enabled: true },
+        { name: 'The Diplomat', url: 'https://thediplomat.com/feed/', enabled: true },
+        { name: 'Tech in Asia', url: 'https://www.techinasia.com/feed', enabled: true },
+        { name: 'Reuters Asia', url: 'https://feeds.reuters.com/reuters/asia', enabled: true },
+        { name: 'The Hindu', url: 'https://www.thehindu.com/news/national/feeder/default.rss', enabled: true },
+        { name: 'Japan Times', url: 'https://www.japantimes.co.jp/feed/news/', enabled: true }
+    ],
         us: [
             { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', enabled: true },
             { name: 'The Verge', url: 'https://www.theverge.com/rss/index.xml', enabled: true },
@@ -438,10 +459,6 @@
             { name: 'Bloomberg Tech', url: 'https://feeds.bloomberg.com/technology/news.rss', enabled: true },
             { name: 'Bloomberg Business', url: 'https://feeds.bloomberg.com/business/news.rss', enabled: true }
         ],
-        global: [
-            { name: 'BBC Technology', url: 'http://feeds.bbci.co.uk/news/technology/rss.xml', enabled: true },
-            { name: 'The Guardian Tech', url: 'https://www.theguardian.com/technology/rss', enabled: true }
-        ]
     };
 
     let TOPICS = [
