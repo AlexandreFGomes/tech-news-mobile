@@ -378,19 +378,46 @@
 <script>
     const PROXY_URL = 'https://eu-tech-rss-proxy-e66a.afg-2-92.workers.dev/?url=';
 
+    const APP_VERSION = 2;
+
     const NEWS_SOURCES = {
         netherlands: [
             { name: 'NU.nl Algemeen', url: 'https://www.nu.nl/rss/Algemeen', enabled: true },
             { name: 'NU.nl Tech', url: 'https://www.nu.nl/rss/Tech', enabled: true },
-            { name: 'Tweakers', url: 'https://feeds.feedburner.com/tweakers/mixed', enabled: true }
+            { name: 'Tweakers', url: 'https://feeds.feedburner.com/tweakers/mixed', enabled: true },
+            { name: 'Parool', url: 'https://www.parool.nl/rss.xml', enabled: true },
+            { name: 'NRC', url: 'https://nrc.nl/rss/', enabled: true },
+            { name: 'NOS', url: 'https://nos.nl/rss.xml', enabled: true },
+            { name: 'Volkskrant', url: 'https://www.volkskrant.nl/rss.xml', enabled: true },
+            { name: 'FD', url: 'https://fd.nl/?rss', enabled: true },
+            { name: 'Algemeen Dagblad', url: 'https://www.ad.nl/home/rss.xml', enabled: true },
+            { name: 'Tweakers.net', url: 'https://tweakers.net/feeds/mixed.xml', enabled: true },
+            { name: 'Dutchcowboys', url: 'https://www.dutchcowboys.nl/sitemap/news.xml', enabled: true },
+            { name: 'NL Times', url: 'https://nltimes.nl/rssfeed2', enabled: true },
+            { name: 'DutchNews', url: 'https://www.dutchnews.nl/rss', enabled: true }
         ],
         portugal: [
             { name: 'Público', url: 'https://www.publico.pt/rss', enabled: true },
-            { name: 'SAPO TEK', url: 'https://tek.sapo.pt/feed/', enabled: true }
+            { name: 'SAPO TEK', url: 'https://tek.sapo.pt/feed/', enabled: true },
+            { name: 'Expresso', url: 'https://rss.impresa.pt/feed/latest/expresso.rss?type=ARTICLE,VIDEO,GALLERY,STREAM,PLAYLIST,EVENT,NEWSLETTER&limit=20&pubsubhub=true', enabled: true },
+            { name: 'Observador', url: 'https://observador.pt/feed/', enabled: true },
+            { name: 'Pplware', url: 'https://pplware.sapo.pt/feed/', enabled: true },
+            { name: 'Techbit', url: 'https://techbit.pt/feed/', enabled: true },
+            { name: 'MIT Tech Review PT', url: 'https://www.mittechreview.pt/rss', enabled: true },
+            { name: 'Leak', url: 'https://www.leak.pt/feed/', enabled: true },
+            { name: 'SAPO', url: 'https://www.sapo.pt/rss/destaques', enabled: true },
+            { name: 'IOL', url: 'https://www.iol.pt/rss.xml', enabled: true },
+            { name: 'Notícias ao Minuto', url: 'https://www.noticiasaominuto.com/rss/ultima-hora', enabled: true }
         ],
         europe: [
-            { name: 'EURACTIV', url: 'https://www.euractiv.com/feed/', enabled: true },
-            { name: 'Politico EU', url: 'https://www.politico.eu/feed/', enabled: true }
+            { name: 'Politico EU', url: 'https://www.politico.eu/feed/', enabled: true },
+            { name: 'Euronews', url: 'https://www.euronews.com/rss', enabled: true },
+            { name: 'EUobserver', url: 'https://euobserver.com/feed/', enabled: true },
+            { name: 'The Guardian Europe', url: 'https://www.theguardian.com/world/europe-news/rss', enabled: true },
+            { name: 'Voxeurop', url: 'https://www.voxeurop.eu/rss', enabled: true },
+            { name: 'NY Times Europe', url: 'https://www.nytimes.com/section/world/europe/rss.xml', enabled: true },
+            { name: 'Euronews Tech', url: 'https://www.euronews.com/rss?level=theme&name=tech-news', enabled: true },
+            { name: 'Follow the Money', url: 'https://www.ftm.nl/feed', enabled: true }
         ],
         us: [
             { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', enabled: true },
@@ -398,9 +425,18 @@
             { name: 'Ars Technica', url: 'https://feeds.arstechnica.com/arstechnica/index', enabled: true },
             { name: 'Wired', url: 'https://www.wired.com/feed/rss', enabled: true },
             { name: 'Engadget', url: 'https://www.engadget.com/rss.xml', enabled: true },
-            { name: 'The Next Web', url: 'https://feeds.thenextweb.com/thenextweb', enabled: true },
-            { name: 'VentureBeat', url: 'https://venturebeat.com/feed/', enabled: true },
-            { name: 'ZDNet', url: 'https://www.zdnet.com/news/rss/', enabled: true }
+            { name: 'NY Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', enabled: true },
+            { name: 'LA Times', url: 'https://www.latimes.com/index.rss', enabled: true },
+            { name: 'NPR', url: 'https://feeds.npr.org/1002/rss.xml', enabled: true },
+            { name: 'Politico', url: 'https://www.politico.com/rss/politicopicks.xml', enabled: true },
+            { name: 'The Information', url: 'https://www.theinformation.com/feed', enabled: true },
+            { name: 'The Atlantic', url: 'https://www.theatlantic.com/feed/all/', enabled: true },
+            { name: 'FT', url: 'https://www.ft.com/rss/home', enabled: true },
+            { name: 'Reuters Tech', url: 'https://feeds.reuters.com/reuters/technologyNews', enabled: true },
+            { name: 'Reuters Business', url: 'https://feeds.reuters.com/reuters/businessNews', enabled: true },
+            { name: 'Washington Post Tech', url: 'https://feeds.washingtonpost.com/rss/business/technology', enabled: true },
+            { name: 'Bloomberg Tech', url: 'https://feeds.bloomberg.com/technology/news.rss', enabled: true },
+            { name: 'Bloomberg Business', url: 'https://feeds.bloomberg.com/business/news.rss', enabled: true }
         ],
         global: [
             { name: 'BBC Technology', url: 'http://feeds.bbci.co.uk/news/technology/rss.xml', enabled: true },
@@ -1113,6 +1149,23 @@
 
     function loadSettings() {
         try {
+            // ── Version check: merge any new default sources ──────────
+            const savedVersion = parseInt(localStorage.getItem('appVersion') || '0');
+            if (savedVersion < APP_VERSION) {
+                const saved = JSON.parse(localStorage.getItem('newsSources') || '{}');
+                Object.keys(NEWS_SOURCES).forEach(region => {
+                    if (!saved[region]) saved[region] = [];
+                    NEWS_SOURCES[region].forEach(defaultSource => {
+                        if (!saved[region].some(s => s.url === defaultSource.url)) {
+                            saved[region].push({ ...defaultSource });
+                        }
+                    });
+                    NEWS_SOURCES[region] = saved[region];
+                });
+                localStorage.setItem('newsSources', JSON.stringify(NEWS_SOURCES));
+                localStorage.setItem('appVersion', APP_VERSION);
+            }
+
             const allTopics = localStorage.getItem('allTopics');
             if (allTopics) { const lt = JSON.parse(allTopics); TOPICS.length = 0; lt.forEach(t => TOPICS.push(t)); }
 
