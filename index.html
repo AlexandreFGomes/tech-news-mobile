@@ -244,9 +244,10 @@
                     <option value="netherlands">Netherlands</option>
                     <option value="portugal">Portugal</option>
                     <option value="europe">Europe</option>
-                    <option value="uk">United Kingdom</option>
                     <option value="us">United States</option>
+                    <option value="uk">United Kingdom</option>
                     <option value="asia">Asia</option>
+                    <option value="global">Global</option>
                 </select>
             </div>
 
@@ -379,7 +380,7 @@
 <script>
     const PROXY_URL = 'https://eu-tech-rss-proxy-e66a.afg-2-92.workers.dev/?url=';
 
-    const APP_VERSION = 2;
+    const APP_VERSION = 3;
 
     const NEWS_SOURCES = {
         netherlands: [
@@ -439,9 +440,13 @@
             { name: 'Bloomberg Tech', url: 'https://feeds.bloomberg.com/technology/news.rss', enabled: true },
             { name: 'Bloomberg Business', url: 'https://feeds.bloomberg.com/business/news.rss', enabled: true }
         ],
-        uk: [
+        global: [
             { name: 'BBC Technology', url: 'http://feeds.bbci.co.uk/news/technology/rss.xml', enabled: true },
-            { name: 'The Guardian Tech', url: 'https://www.theguardian.com/technology/rss', enabled: true },
+            { name: 'The Guardian Tech', url: 'https://www.theguardian.com/technology/rss', enabled: true }
+        ],
+        uk: [
+            { name: 'BBC News', url: 'http://feeds.bbci.co.uk/news/rss.xml', enabled: true },
+            { name: 'The Guardian', url: 'https://www.theguardian.com/uk/rss', enabled: true },
             { name: 'Financial Times (UK)', url: 'https://www.ft.com/rss/home/uk', enabled: true },
             { name: 'Sky News', url: 'https://feeds.skynews.com/feeds/rss/uk.xml', enabled: true },
             { name: 'The Independent', url: 'https://www.independent.co.uk/news/rss', enabled: true },
@@ -458,7 +463,7 @@
             { name: 'Reuters Asia', url: 'https://feeds.reuters.com/reuters/asia', enabled: true },
             { name: 'The Hindu', url: 'https://www.thehindu.com/news/national/feeder/default.rss', enabled: true },
             { name: 'Japan Times', url: 'https://www.japantimes.co.jp/feed/news/', enabled: true }
-        ],
+        ]
     };
 
     let TOPICS = [
@@ -824,10 +829,12 @@
         const cutoffTime = now - (timeframeHours * 3600000);
 
         if (cached) {
-            const { timestamp, articles } = JSON.parse(cached);
-            if (now - timestamp < cacheExpiry) {
-                return articles.filter(a => !a.pubDate || a.pubDate >= cutoffTime);
-            }
+            try {
+                const { timestamp, articles } = JSON.parse(cached);
+                if (now - timestamp < cacheExpiry) {
+                    return { articles: articles.filter(a => !a.pubDate || a.pubDate >= cutoffTime), error: null };
+                }
+            } catch(e) {}
         }
 
         try {
@@ -840,11 +847,27 @@
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const text = await response.text();
             if (!text?.trim()) throw new Error('Empty response');
-            const xml = new DOMParser().parseFromString(text, 'text/xml');
-            if (xml.querySelector('parsererror')) throw new Error('Invalid XML');
+
+            // ── Robust XML parsing ──────────────────────────────
+            // Some feeds have encoding declarations that trip up DOMParser;
+            // strip them and also handle feeds served as HTML (paywalls/redirects)
+            const cleanText = text
+                .replace(/<\?xml[^?]*\?>/i, '')          // strip XML declaration
+                .replace(/&(?!amp;|lt;|gt;|quot;|apos;|#)/g, '&amp;') // fix bare ampersands
+                .trim();
+
+            let xml = new DOMParser().parseFromString(cleanText, 'text/xml');
+            let items = xml.querySelectorAll('item, entry');
+
+            // If DOMParser failed or found no items, try text/html mode as fallback
+            if (xml.querySelector('parsererror') || items.length === 0) {
+                xml = new DOMParser().parseFromString(text, 'text/html');
+                items = xml.querySelectorAll('item, entry');
+                if (items.length === 0) throw new Error('Not a valid RSS/Atom feed');
+            }
 
             const articles = [];
-            xml.querySelectorAll('item, entry').forEach(item => {
+            items.forEach(item => {
                 try {
                     const title = item.querySelector('title')?.textContent?.trim() || '';
                     const linkEl = item.querySelector('link');
@@ -862,10 +885,11 @@
             });
 
             localStorage.setItem(cacheKey, JSON.stringify({ timestamp: now, articles }));
-            return articles;
+            return { articles, error: null };
         } catch(error) {
-            showStatus(`✗ ${sourceName}: ${error.message}`, 'error');
-            return [];
+            // Return error silently — caller will aggregate and show summary
+            const label = error.name === 'AbortError' ? 'Timeout' : error.message;
+            return { articles: [], error: `${sourceName}: ${label}` };
         }
     }
 
@@ -921,10 +945,20 @@
         try {
             const timeframeHours = parseInt(document.getElementById('timeframeSelect').value);
             const results = await Promise.all(allSources.map(s => fetchRSSFeed(s.url, s.name, s.region, timeframeHours)));
-            const allArticles = results.flat();
+
+            const errors = results.map(r => r.error).filter(Boolean);
+            const allArticles = results.flatMap(r => r.articles);
 
             const seen = new Set();
             const unique = allArticles.filter(a => { if (seen.has(a.url)) return false; seen.add(a.url); return true; });
+
+            // Show one compact error summary instead of flooding with individual errors
+            if (errors.length > 0) {
+                const summary = errors.length <= 3
+                    ? `⚠ ${errors.length} source(s) failed: ${errors.join(', ')}`
+                    : `⚠ ${errors.length} sources failed (${errors.slice(0,2).join(', ')}…) — paywalls or broken feeds`;
+                showStatus(summary, 'warning');
+            }
 
             if (!unique.length) {
                 showStatus('No articles found', 'error');
@@ -938,7 +972,7 @@
                 } else {
                     lastFilteredArticles = filtered;
                     displayNews(filtered, timeframeHours);
-                    showStatus(`${filtered.length} articles loaded`, 'success');
+                    showStatus(`${filtered.length} articles loaded from ${unique.length} fetched`, 'success');
                 }
             }
             saveSettings();
@@ -1262,6 +1296,7 @@
             statusDiv.innerHTML = '<span class="text-blue-500">JSON shown in box above — copy it manually</span>';
         }
     }
+
 
     window.addEventListener('load', () => {
         loadSettings();
